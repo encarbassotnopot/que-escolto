@@ -1,31 +1,24 @@
-<!doctype html>
-<html lang="en">
+<html lang="ca">
 	<head>
+		<title>què escolto</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
 	</head>
-	<body>
-		<h1 id="heading"></h1>
-		<button id="button" type="button">Fetch a random UUID</button>
-		<output id="random" for="button"></output>
-		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
-				});
 
-			const button = document.getElementById("button");
-			button.addEventListener("click", () => {
-				fetch('/random')
-					.then((resp) => resp.text())
-					.then((text) => {
-						const random = document.getElementById('random');
-						random.textContent = text;
-					});
-			});
+	<body>
+		<div id="embed-iframe"></div>
+		<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+		<script type="text/javascript">
+			window.onSpotifyIframeApiReady = async (IFrameAPI) => {
+				const element = document.getElementById('embed-iframe');
+				const options = {
+					width: '100%',
+					height: '100%',
+					uri: await (await fetch('/spotid')).text(),
+				};
+				const callback = (EmbedController) => {};
+				IFrameAPI.createController(element, options, callback);
+			};
 		</script>
 	</body>
 </html>

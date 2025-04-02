@@ -7,13 +7,17 @@
 	"name": "que-escolto",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-04-02",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"assets": {
 		"binding": "ASSETS",
 		"directory": "./public"
 	},
+	"kv_namespaces": [
+		{
+			"binding": "KV",
+			"id": "778fce4720534386848f48ab94bcfdc1"
+		}
+	],
 	"observability": {
 		"enabled": true
 	}
