@@ -14,7 +14,7 @@
 		/* Specify how TypeScript looks up a file from a given module specifier. */
 		"moduleResolution": "Bundler",
 		/* Specify type package names to be included without being referenced in a source file. */
-		"types": ["@types/node", "spotify-types"],
+		"types": ["@types/node", "@types/spotify-api"],
 		/* Enable importing .json files */
 		"resolveJsonModule": true,
 
