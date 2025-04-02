@@ -19,7 +19,7 @@ export async function getBearer(): Promise<string> {
  * @returns A new access token
  */
 async function refreshToken(): Promise<string> {
-	let refresh = await env.KV.get('refresh');
+	const refresh = await env.KV.get('refresh')!;
 	if (!refresh) return await newAccessToken();
 
 	const url = 'https://accounts.spotify.com/api/token';
@@ -36,13 +36,13 @@ async function refreshToken(): Promise<string> {
 	};
 	const response = await fetch(url, payload);
 	if (!response.ok) {
-		console.error(await response.json());
-		throw Error('Error fetching token with refresh');
+		console.warn(await response.json());
+		return newAccessToken();
 	}
-	const parsed = response.json<TokenResponse>();
-	env.KV.put('bearer', (await parsed).access_token, { expirationTtl: (await parsed).expires_in });
-	env.KV.put('refresh', (await parsed).refresh_token);
-	return (await parsed).access_token;
+	const parsed = await response.json<TokenResponse>();
+	env.KV.put('bearer', parsed.access_token, { expirationTtl: parsed.expires_in });
+	if (parsed.refresh_token) env.KV.put('refresh', parsed.refresh_token);
+	return parsed.access_token;
 }
 
 /**
@@ -70,8 +70,8 @@ async function newAccessToken(): Promise<string> {
 		console.error(await response.json());
 		throw Error('Error fetching token with auth');
 	}
-	const parsed = response.json<TokenResponse>();
-	env.KV.put('bearer', (await parsed).access_token, { expirationTtl: (await parsed).expires_in });
-	env.KV.put('refresh', (await parsed).refresh_token);
-	return (await parsed).access_token;
+	const parsed = await response.json<TokenResponse>();
+	env.KV.put('bearer', parsed.access_token, { expirationTtl: parsed.expires_in });
+	if (parsed.refresh_token) env.KV.put('refresh', parsed.refresh_token);
+	return parsed.access_token;
 }
