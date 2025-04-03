@@ -13,6 +13,10 @@
 
 import { getBearer } from './spotify-auth';
 
+function encodeXML(original: string): string {
+	return original.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
 async function genPlayerSvg(playing: SpotifyApi.CurrentlyPlayingResponse) {
 	if (playing.item?.type !== 'track') return new Response('podcast not supported', { status: 500 });
 	const progress = new Date(playing.progress_ms ? playing.progress_ms : 0);
@@ -36,11 +40,11 @@ async function genPlayerSvg(playing: SpotifyApi.CurrentlyPlayingResponse) {
 	<line x1="450" x2="${450 + percent * 300}" y1="275" y2="275" stroke="white" id="bar-done" stroke-width="2" />
 	<line x1="${450 + percent * 300}" x2="750" y1="275" y2="275" stroke="grey" id="bar-todo" />
 	<circle cx="${450 + percent * 300}" cy="275" r="4" fill="white" id="tack" />
-	<text x="450" y="100" text-anchor="start" id="song">${songName}</text>
-	<text x="450" y="150" text-anchor="start" id="album">${albumName}</text>
-	<text x="450" y="200" text-anchor="start" id="artist">${artistsName}</text>
-	<text x="450" y="300" text-anchor="start" id="cur-time">${progressString}</text>
-	<text x="750" y="300" text-anchor="end" id="track-time">${durationString}</text>
+	<text x="450" y="100" text-anchor="start" id="song">${encodeXML(songName)}</text>
+	<text x="450" y="150" text-anchor="start" id="album">${encodeXML(albumName)}</text>
+	<text x="450" y="200" text-anchor="start" id="artist">${encodeXML(artistsName)}</text>
+	<text x="450" y="300" text-anchor="start" id="cur-time">${encodeXML(progressString)}</text>
+	<text x="750" y="300" text-anchor="end" id="track-time">${encodeXML(durationString)}</text>
 	<g transform="translate(600, 325)" id="pause">
 		<circle cx="0" cy="0" r="30" fill="white" id="button" />
 		<rect x="-8" y="-12.5" width="6" height="25" fill=" black" />
