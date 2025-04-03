@@ -3,7 +3,7 @@
 
 No sé si era l'idea que tenia des de l'inici, però m'ha acabat fent gràcia poder-ho incrustar a github i fer que s'actualitzi la imatge en temps real.
 
-![](https://que-escolto.eina.workers.dev/playerr)
+![](https://que-escolto.eina.workers.dev/player)
 
 ## Què faig servir:
 - [Workers de Cloudflare](https://developers.cloudflare.com/workers/)
