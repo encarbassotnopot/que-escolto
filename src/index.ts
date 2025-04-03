@@ -49,7 +49,9 @@ async function genPlayerSvg(playing: SpotifyApi.CurrentlyPlayingResponse) {
 
 
 </svg>`;
-	return new Response(PLAYER_SVG, { headers: { 'content-type': 'image/svg+xml', status: '200' } });
+	return new Response(PLAYER_SVG, {
+		headers: { 'content-type': 'image/svg+xml', status: '200', 'Cache-Control': 'max-age=0, no-cache, no-store, must-revalidate' },
+	});
 }
 
 export default {
