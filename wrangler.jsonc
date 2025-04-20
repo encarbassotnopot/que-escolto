@@ -31,8 +31,20 @@
 			"vars": {
 				"ENVIRONMENT": "debug"
 			}
+		},
+		"local": {
+			"vars": {
+				"ENVIRONMENT": "local"
+			},
+			"kv_namespaces": [
+				{
+					"binding": "KV",
+					"id": "local"
+				}
+			]
 		}
-	}
+	},
+	"upload_source_maps": true
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

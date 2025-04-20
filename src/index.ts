@@ -12,28 +12,39 @@
  */
 
 import { getBearer } from './spotify-auth';
-import { playingResponse } from './debugResponse';
+import { playingResponse, lastTrack } from './debugResponse';
+import { PlayingInfo } from './interfaces';
 
 function encodeXML(original: string): string {
 	return original.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
-async function genPlayerSvg(playing: SpotifyApi.CurrentlyPlayingResponse) {
-	if (playing.item?.type !== 'track') return new Response('podcast not supported', { status: 500 });
-	const progress = new Date(playing.progress_ms ? playing.progress_ms : 0);
-	const duration = new Date(playing.item.duration_ms);
-	const coverArt = await fetch(playing.item.album.images[1].url).then(
+async function genPlayerSvg(track: SpotifyApi.TrackObjectFull, info: PlayingInfo) {
+	const progress = new Date(info.progress_ms ? info.progress_ms : 0);
+	const duration = new Date(track.duration_ms ? track.duration_ms : 0);
+	const coverArt = await fetch(track.album.images[1].url).then(
 		async (res) => 'data:' + res.headers.get('content-type') + ';base64,' + Buffer.from(await res.arrayBuffer()).toString('base64')
 	);
-	const isPlaying = playing.is_playing;
 	const progressString: string = progress.getMinutes() + ':' + ('0' + progress.getSeconds()).slice(-2);
 	const durationString: string = duration.getMinutes() + ':' + ('0' + duration.getSeconds()).slice(-2);
 	const percent = progress.valueOf() / duration.valueOf();
-	const songName = playing.item.name;
-	const albumName = playing.item.album.name;
-	const artistsName = playing.item.artists.map((artist) => artist.name).join(', ');
-	const playIcon = `<polygon points="0,0 86.6,50, 0,100" fill="black" transform="translate(-8 -12.5) scale(0.25)"/>`
-	const pauseIcon = `<rect x="-8" y="-12.5" width="6" height="25" fill="black" /><rect x="3" y="-12.5" width="6" height="25" fill="black" />`
+	const songName = track.name;
+	const albumName = track.album.name;
+	const artistsName = track.artists.map((artist) => artist.name).join(', ');
+	const playIcon = `<polygon points="0,0 86.6,50, 0,100" fill="black" transform="translate(-8 -12.5) scale(0.25)"/>`;
+	const pauseIcon = `<rect x="-10" y="-12.5" width="7" height="25" fill="black" /><rect x="3" y="-12.5" width="7" height="25" fill="black" />`;
+	const stopIcon = `<rect x="-10" y="-10" width="20" height="20" fill="black" />`;
+
+	const playerButton = () => {
+		switch (info.status) {
+			case 'playing':
+				return pauseIcon;
+			case 'paused':
+				return playIcon;
+			case 'stopped':
+				return stopIcon;
+		}
+	};
 
 	const PLAYER_SVG = `<svg viewBox='0 0 800 400' xmlns="http://www.w3.org/2000/svg">
 
@@ -50,18 +61,16 @@ async function genPlayerSvg(playing: SpotifyApi.CurrentlyPlayingResponse) {
 	<text x="750" y="300" text-anchor="end" id="track-time">${encodeXML(durationString)}</text>
 	<g transform="translate(600, 325)" id="pause">
 		<circle cx="0" cy="0" r="30" fill="white" id="button" />
-		${playing.is_playing ? pauseIcon : playIcon}
+		${playerButton()}
 	</g>
-
-
-</svg>`;
+	</svg>`;
 	return new Response(PLAYER_SVG, {
 		headers: { 'content-type': 'image/svg+xml', status: '200', 'Cache-Control': 'max-age=0, no-cache, no-store, must-revalidate' },
 	});
 }
 
-async function getCurrentlyPlaying(): Promise<SpotifyApi.CurrentlyPlayingResponse> {
-	const bearer = await getBearer();
+async function getCurrentlyPlaying(env: Env, bearer: string): Promise<SpotifyApi.CurrentlyPlayingResponse | 204> {
+	if (env.ENVIRONMENT === 'debug') return playingResponse;
 
 	const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
 		method: 'GET',
@@ -69,38 +78,48 @@ async function getCurrentlyPlaying(): Promise<SpotifyApi.CurrentlyPlayingRespons
 			Authorization: 'Bearer ' + bearer,
 		},
 	});
-	if (!res.ok || res.status != 200) {
-		console.log(`status: ${res.status} ${res.statusText}`);
-		console.log(await res.text());
-		return Promise.reject("Error fetching from Spotify");
+	if (!res.ok) {
+		console.error(`status: ${res.status} ${res.statusText}`);
+		console.error(await res.text());
+		return Promise.reject(new Error('Error fetching current song from Spotify'));
 	}
+	if (res.status === 204) return 204;
 	return await res.json<SpotifyApi.CurrentlyPlayingResponse>();
+}
+
+async function getLastTrack(env: Env, bearer: string): Promise<SpotifyApi.TrackObjectFull> {
+	if (env.ENVIRONMENT === 'debug') return lastTrack.items[0].track;
+
+	const res = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=1', {
+		method: 'GET',
+		headers: {
+			Authorization: 'Bearer ' + bearer,
+		},
+	});
+	if (!res.ok) {
+		console.error(`status: ${res.status} ${res.statusText}`);
+		console.error(await res.text());
+		return Promise.reject('Error fetching recently played songs from Spotify');
+	}
+	return (await res.json<SpotifyApi.UsersRecentlyPlayedTracksResponse>()).items[0].track;
+}
+
+async function getPlayerTrack(env: Env, bearer: string): Promise<[SpotifyApi.TrackObjectFull, PlayingInfo]> {
+	const info: PlayingInfo = { status: 'stopped', progress_ms: 0 };
+	const current = await getCurrentlyPlaying(env, bearer);
+	if (current !== 204 && current.item?.type === 'track') {
+		info.progress_ms = current.progress_ms ? current.progress_ms : 0;
+		info.status = current.is_playing ? 'playing' : 'paused';
+		return [current.item, info];
+	}
+	const last = await getLastTrack(env, bearer);
+	return [last, info];
 }
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		const url = new URL(request.url);
-		if (['/spotid', '/player', '/coverart'].every((el) => el === request.url)) return new Response('Not Found', { status: 404 });
-		const parsed = env.ENVIRONMENT === "debug" ? playingResponse : await getCurrentlyPlaying()
-
-		if (!parsed)
-			return new Response('Spotify fetch error', { status: 500 })
-
-		switch (url.pathname) {
-			case '/spotid':
-				return new Response(parsed.item?.uri);
-			case '/player':
-				return genPlayerSvg(parsed);
-			case '/coverart': {
-				switch (parsed.item?.type) {
-					case 'track':
-						return fetch(parsed.item?.album.images[0].url);
-					case 'episode':
-						return fetch(parsed.item?.images[0].url);
-				}
-			}
-			default:
-				return new Response('Not Found', { status: 404 });
-		}
+		const bearer = await getBearer();
+		const [track, info] = await getPlayerTrack(env, bearer);
+		return genPlayerSvg(track, info);
 	},
 } satisfies ExportedHandler<Env>;
