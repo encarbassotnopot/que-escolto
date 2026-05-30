@@ -14,6 +14,7 @@
 import { getBearer } from './spotify-auth';
 import { playingResponse, lastTrack } from './debugResponse';
 import { PlayingInfo } from './interfaces';
+import { GOOGLE_FONT_B64 } from './ugly';
 
 function encodeXML(original: string): string {
 	return original.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
@@ -38,7 +39,7 @@ async function genPlayerSvg(track: SpotifyApi.TrackObjectFull, info: PlayingInfo
 	const progress = new Date(info.progress_ms ? info.progress_ms : 0);
 	const duration = new Date(track.duration_ms ? track.duration_ms : 0);
 	const coverArt = await fetch(track.album.images[1].url).then(
-		async (res) => 'data:' + res.headers.get('content-type') + ';base64,' + Buffer.from(await res.arrayBuffer()).toString('base64')
+		async (res) => 'data:' + res.headers.get('content-type') + ';base64,' + Buffer.from(await res.arrayBuffer()).toString('base64'),
 	);
 	const progressString: string = toTimeString(progress);
 	const durationString: string = toTimeString(duration);
@@ -86,7 +87,25 @@ async function genPlayerSvg(track: SpotifyApi.TrackObjectFull, info: PlayingInfo
 	};
 
 	const PLAYER_SVG = `<svg viewBox='0 0 800 400' xmlns="http://www.w3.org/2000/svg">
+	<style>
 
+		${GOOGLE_FONT_B64}
+
+		text {
+	  font-family: "Google Sans Flex", sans-serif;
+	  font-optical-sizing: auto;
+	  font-weight: 400;
+	  font-style: normal;
+	  font-variation-settings:
+	    "slnt" 0,
+	    "wdth" 100,
+	    "GRAD" 0,
+	    "ROND" 0;
+	}
+	#song {
+  	font-weight: 600;
+  }
+	</style>
 	<rect x="0" y="0" width="100%" height="100%" fill="lightgreen" rx="15" />
 	<image x="50" y="50" height="300" width="300" href="${coverArt}"
 		clip-path="inset(0% round 15px)" id="cover" />
