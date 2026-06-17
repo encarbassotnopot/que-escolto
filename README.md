@@ -1,7 +1,11 @@
 # Què escolto?
 ## Aquest projecte és una tonteria que he fet en dos matins
 
-No sé si era l'idea que tenia des de l'inici, però m'ha acabat fent gràcia poder-ho incrustar a github i fer que s'actualitzi la imatge en temps real.
+No sé si era l'idea que tenia des de l'inici, però m'ha acabat fent gràcia poder-ho incrustar a github i fer que s'actualitzi la imatge (SVG) en temps real.
+
+La tipografia i la imatge les codifico en base64 per poder-les incrustar al vector.
+
+El temps (barra de progrés i minuts i segons) és amb animacions. De la barra en desplaço el cursor i les llargades de les barres de temps (de colors diferents). Minuts i segons genero totes les marques de temps i les mostro/amago quan toca. Xulo eh?
 
 ![](https://que-escolto.eina.workers.dev/player)
 
@@ -21,19 +25,7 @@ No sé si era l'idea que tenia des de l'inici, però m'ha acabat fent gràcia po
 8. Si tot va bé, tindrem l'aplicació funcional.
 
 ## Endpoints:
-**/**
-Un embed d'spotify sense més. Fa un fetch a **/spotid** per saber què incrustar. Va ser el primer prototip.
-
-**/spotid**
-L'id d'Spotify del que estic escoltant. L'embed el va a buscar aquí l'id del que escolto.
-
-**/coverart**
-Això va ser per provar si podia incrustar a github un SVG amb un camp d'_href_ que apuntés fora del servidor. Hauria facilitat la feina, però no funciona per tema de CORS.
-
-**/player**
-Aquí hi ha la teca. Un SVG que he fet a mà i en el que actualitzo diversos valors en funció del que estic escoltant.
-La imatge de portada l'he de demanar des del servidor i convertir-la a una cadena de base64 per poder-la incrustar al vector (i que github l'agafi sense plorar).
-
+ja no n'hi ha cap. tot et retorna el "reproductor"
 
 ## Problemes?
 Si en tens avisa'm suposo.
